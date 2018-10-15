@@ -31,7 +31,7 @@ extension UITextField {
         case .validating:
             let validationActivityIndicator = UIActivityIndicatorView()
             validationActivityIndicator.hidesWhenStopped = true
-            validationActivityIndicator.activityIndicatorViewStyle = .gray
+            validationActivityIndicator.style = .gray
             validationActivityIndicator.frame = CGRect(x: 0, y: 0, width: 30, height: 30)
             self.rightView = validationActivityIndicator
             validationActivityIndicator.startAnimating()
