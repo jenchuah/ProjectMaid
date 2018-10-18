@@ -20,7 +20,7 @@ extension UIViewController {
     }
     
     func addToContainer(_ container: UIView, of parentViewController: UIViewController) {
-        parentViewController.addChildViewController(self)
+        parentViewController.addChild(self)
         self.view.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(self.view)
         NSLayoutConstraint.activate([
@@ -29,13 +29,13 @@ extension UIViewController {
             self.view.topAnchor.constraint(equalTo: container.topAnchor, constant: 0),
             self.view.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: 0)
             ])
-        self.didMove(toParentViewController: parentViewController)
+        self.didMove(toParent: parentViewController)
     }
     
     func displayAlert(title: String, message: String) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: UIAlertControllerStyle.alert)
+        let alert = UIAlertController(title: title, message: message, preferredStyle: UIAlertController.Style.alert)
         
-        alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil))
+        alert.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
         
         self.present(alert, animated: true, completion: nil)
     }
