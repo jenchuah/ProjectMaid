@@ -5,8 +5,6 @@
 //  Created by Jen Min Chuah on 11/10/18.
 //
 
-import Foundation
-
 extension String {
     func capitalizeFirstLetter() -> String {
         let lowercasedString = self.lowercased()
