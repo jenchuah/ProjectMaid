@@ -63,9 +63,12 @@ extension UIViewController {
     }
     
     var center: CGPoint {
+        return CGPoint(x: Screen.Width/2, y: (self.contentHeight)/2)
+    }
+    
+    var contentHeight: CGFloat {
         let navigationBarHeight = navigationController?.navigationBar.frame.size.height ?? 0
         let tabBarHeight = tabBarController?.tabBar.frame.size.height ?? 0
-        
-        return CGPoint(x: Screen.Width/2, y: (Screen.Height-navigationBarHeight-tabBarHeight)/2)
+        return Screen.Height - navigationBarHeight - tabBarHeight
     }
 }
