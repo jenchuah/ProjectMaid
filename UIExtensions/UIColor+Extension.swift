@@ -9,6 +9,6 @@ import Foundation
 
 extension UIColor {
     func translucent() -> UIColor {
-        return self.withAlphaComponent(0.5)
+        return self.withAlphaComponent(0.1)
     }
 }
