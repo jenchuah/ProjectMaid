@@ -5,7 +5,7 @@
 //  Created by Jen Min Chuah on 11/10/18.
 //
 
-import Foundation
+import UIKit
 
 extension UITextField {
     func getTrimmedValue() -> String? {

@@ -5,6 +5,8 @@
 //  Created by Jen Min Chuah on 11/10/18.
 //
 
+import UIKit
+
 extension String {
     func capitalizeFirstLetter() -> String {
         let lowercasedString = self.lowercased()

@@ -5,6 +5,7 @@
 //  Created by Jen Min Chuah on 20/12/18.
 //  Copyright © 2018 Jenuine Apps. All rights reserved.
 //
+import UIKit
 
 extension UIStackView {
     func removeAllArrangedSubviews() {
