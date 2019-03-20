@@ -19,65 +19,48 @@ let kSecMatchLimitOneValue = NSString(format: kSecMatchLimitOne)
 
 public class KeychainService: NSObject {
     
-    class func updatePassword(service: String, account:String, data: String) {
+    class func setPassword(service: String, account:String, data: String) throws {
         if let dataFromString: Data = data.data(using: String.Encoding.utf8, allowLossyConversion: false) {
             
-            // Instantiate a new default keychain query
-            let keychainQuery: NSMutableDictionary = NSMutableDictionary(objects: [kSecClassGenericPasswordValue, service, account, kCFBooleanTrue, kSecMatchLimitOneValue], forKeys: [kSecClassValue, kSecAttrServiceValue, kSecAttrAccountValue, kSecReturnDataValue, kSecMatchLimitValue])
+            var query: [String: Any] = [:]
+            query[String(kSecClass)] = kSecClassGenericPassword
+            query[String(kSecAttrService)] = service
+            query[String(kSecAttrAccount)] = account
             
-            let status = SecItemUpdate(keychainQuery as CFDictionary, [kSecValueDataValue:dataFromString] as CFDictionary)
-            
-            if (status != errSecSuccess) {
-                if #available(iOS 11.3, *) {
-                    if let err = SecCopyErrorMessageString(status, nil) {
-                        print("Read failed: \(err)")
-                    }
-                } else {
-                    print("Failed to update password")
+            var status = SecItemCopyMatching(query as CFDictionary, nil)
+            switch status {
+            case errSecSuccess:
+                var attributesToUpdate: [String: Any] = [:]
+                attributesToUpdate[String(kSecValueData)] = dataFromString
+                
+                status = SecItemUpdate(query as CFDictionary,
+                                       attributesToUpdate as CFDictionary)
+                if status != errSecSuccess {
+                    throw error(from: status)
                 }
+            case errSecItemNotFound:
+                query[String(kSecValueData)] = dataFromString
+                
+                status = SecItemAdd(query as CFDictionary, nil)
+                if status != errSecSuccess {
+                    throw error(from: status)
+                }
+            default:
+                throw error(from: status)
             }
         }
     }
     
     
-    class func removePassword(service: String, account: String) {
+    class func removePassword(service: String, account: String) throws {
+        var query: [String: Any] = [:]
+        query[String(kSecClass)] = kSecClassGenericPassword
+        query[String(kSecAttrService)] = service
+        query[String(kSecAttrAccount)] = account
         
-        // Instantiate a new default keychain query
-        let keychainQuery: NSMutableDictionary = NSMutableDictionary(objects: [kSecClassGenericPasswordValue, service, account, kCFBooleanTrue, kSecMatchLimitOneValue], forKeys: [kSecClassValue, kSecAttrServiceValue, kSecAttrAccountValue, kSecReturnDataValue, kSecMatchLimitValue])
-        
-        // Delete any existing items
-        let status = SecItemDelete(keychainQuery as CFDictionary)
-        if (status != errSecSuccess) {
-            if #available(iOS 11.3, *) {
-                if let err = SecCopyErrorMessageString(status, nil) {
-                    print("Remove failed: \(err)")
-                }
-            } else {
-                print("Failed to remove password")
-            }
-        }
-        
-    }
-    
-    
-    class func savePassword(service: String, account: String, data: String) {
-        if let dataFromString = data.data(using: String.Encoding.utf8, allowLossyConversion: false) {
-            
-            // Instantiate a new default keychain query
-            let keychainQuery: NSMutableDictionary = NSMutableDictionary(objects: [kSecClassGenericPasswordValue, service, account, dataFromString], forKeys: [kSecClassValue, kSecAttrServiceValue, kSecAttrAccountValue, kSecValueDataValue])
-            
-            // Add the new keychain item
-            let status = SecItemAdd(keychainQuery as CFDictionary, nil)
-            
-            if (status != errSecSuccess) {    // Always check the status
-                if #available(iOS 11.3, *) {
-                    if let err = SecCopyErrorMessageString(status, nil) {
-                        print("Write failed: \(err)")
-                    }
-                } else {
-                    print("Failed to save password")
-                }
-            }
+        let status = SecItemDelete(query as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else {
+            throw error(from: status)
         }
     }
     
@@ -85,12 +68,18 @@ public class KeychainService: NSObject {
         // Instantiate a new default keychain query
         // Tell the query to return a result
         // Limit our results to one item
-        let keychainQuery: NSMutableDictionary = NSMutableDictionary(objects: [kSecClassGenericPasswordValue, service, account, kCFBooleanTrue, kSecMatchLimitOneValue], forKeys: [kSecClassValue, kSecAttrServiceValue, kSecAttrAccountValue, kSecReturnDataValue, kSecMatchLimitValue])
+        var query: [String: Any] = [:]
+        query[String(kSecClass)] = kSecClassGenericPassword
+        query[String(kSecAttrService)] = service
+        query[String(kSecAttrAccount)] = account
+        query[String(kSecReturnData)] = kCFBooleanTrue
+//        query[String(kSecReturnAttributes)] = kCFBooleanTrue
+        query[String(kSecMatchLimit)] = kSecMatchLimitOne
         
         var dataTypeRef :AnyObject?
         
         // Search for the keychain items
-        let status: OSStatus = SecItemCopyMatching(keychainQuery, &dataTypeRef)
+        let status: OSStatus = SecItemCopyMatching(query as CFDictionary, &dataTypeRef)
         var contentsOfKeychain: String?
         
         if status == errSecSuccess {
@@ -104,4 +93,8 @@ public class KeychainService: NSObject {
         return contentsOfKeychain
     }
 
+    private class func error(from status: OSStatus) -> SecureStoreError {
+        let message = SecCopyErrorMessageString(status, nil) as String? ?? NSLocalizedString("Unhandled Error", comment: "")
+        return SecureStoreError.unhandledError(message: message)
+    }
 }
