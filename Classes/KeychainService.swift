@@ -8,24 +8,27 @@
 
 import Foundation
 
-let kSecClassValue = NSString(format: kSecClass)
-let kSecAttrAccountValue = NSString(format: kSecAttrAccount)
-let kSecValueDataValue = NSString(format: kSecValueData)
-let kSecClassGenericPasswordValue = NSString(format: kSecClassGenericPassword)
-let kSecAttrServiceValue = NSString(format: kSecAttrService)
-let kSecMatchLimitValue = NSString(format: kSecMatchLimit)
-let kSecReturnDataValue = NSString(format: kSecReturnData)
-let kSecMatchLimitOneValue = NSString(format: kSecMatchLimitOne)
+//let kSecClassValue = NSString(format: kSecClass)
+//let kSecAttrAccountValue = NSString(format: kSecAttrAccount)
+//let kSecValueDataValue = NSString(format: kSecValueData)
+//let kSecClassGenericPasswordValue = NSString(format: kSecClassGenericPassword)
+//let kSecAttrServiceValue = NSString(format: kSecAttrService)
+//let kSecMatchLimitValue = NSString(format: kSecMatchLimit)
+//let kSecReturnDataValue = NSString(format: kSecReturnData)
+//let kSecMatchLimitOneValue = NSString(format: kSecMatchLimitOne)
 
 public class KeychainService: NSObject {
-    
+    private class func genericPasswordQuery(service: String, account: String) -> [String:Any] {
+        var query: [String: Any] = [:]
+        query[String(kSecClass)] = kSecClassGenericPassword
+        query[String(kSecAttrService)] = service
+        query[String(kSecAttrAccount)] = account
+        return query
+    }
     class func setPassword(service: String, account:String, data: String) throws {
         if let dataFromString: Data = data.data(using: String.Encoding.utf8, allowLossyConversion: false) {
             
-            var query: [String: Any] = [:]
-            query[String(kSecClass)] = kSecClassGenericPassword
-            query[String(kSecAttrService)] = service
-            query[String(kSecAttrAccount)] = account
+            var query = KeychainService.genericPasswordQuery(service: service, account: account)
             
             var status = SecItemCopyMatching(query as CFDictionary, nil)
             switch status {
@@ -53,10 +56,17 @@ public class KeychainService: NSObject {
     
     
     class func removePassword(service: String, account: String) throws {
+        let query = KeychainService.genericPasswordQuery(service: service, account: account)
+        let status = SecItemDelete(query as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else {
+            throw error(from: status)
+        }
+    }
+    
+    class func removeAllValues() throws {
         var query: [String: Any] = [:]
         query[String(kSecClass)] = kSecClassGenericPassword
-        query[String(kSecAttrService)] = service
-        query[String(kSecAttrAccount)] = account
+        query[String(kSecAttrService)] = Keys.KeychainService
         
         let status = SecItemDelete(query as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
@@ -65,13 +75,7 @@ public class KeychainService: NSObject {
     }
     
     class func loadPassword(service: String, account: String) -> String? {
-        // Instantiate a new default keychain query
-        // Tell the query to return a result
-        // Limit our results to one item
-        var query: [String: Any] = [:]
-        query[String(kSecClass)] = kSecClassGenericPassword
-        query[String(kSecAttrService)] = service
-        query[String(kSecAttrAccount)] = account
+        var query = KeychainService.genericPasswordQuery(service: service, account: account)
         query[String(kSecReturnData)] = kCFBooleanTrue
 //        query[String(kSecReturnAttributes)] = kCFBooleanTrue
         query[String(kSecMatchLimit)] = kSecMatchLimitOne
